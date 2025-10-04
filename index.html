@@ -47,22 +47,6 @@
       </svg>
     );
 
-    const Download = ({ className }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-        <polyline points="7 10 12 15 17 10"></polyline>
-        <line x1="12" y1="15" x2="12" y2="3"></line>
-      </svg>
-    );
-
-    const Upload = ({ className }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-        <polyline points="17 8 12 3 7 8"></polyline>
-        <line x1="12" y1="3" x2="12" y2="15"></line>
-      </svg>
-    );
-
     const Settings = ({ className }) => (
       <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="3"></circle>
@@ -86,13 +70,17 @@
       const [showSettings, setShowSettings] = useState(false);
       const [isSaving, setIsSaving] = useState(false);
       const [lastSaved, setLastSaved] = useState(null);
+      const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
 
-      const [githubConfig, setGithubConfig] = useState({
-        owner: '',
-        repo: '',
-        token: '',
-        branch: 'main',
-        filePath: 'schedule-data.json'
+      const [githubConfig, setGithubConfig] = useState(() => {
+        const saved = localStorage.getItem('githubConfig');
+        return saved ? JSON.parse(saved) : {
+          owner: '',
+          repo: '',
+          token: '',
+          branch: 'main',
+          filePath: 'schedule-data.json'
+        };
       });
 
       const today = new Date();
@@ -132,6 +120,7 @@
 
       const saveGithubConfig = (config) => {
         setGithubConfig(config);
+        localStorage.setItem('githubConfig', JSON.stringify(config));
         setShowSettings(false);
         loadFromGitHub(config);
       };
@@ -163,14 +152,12 @@
           }
         } catch (error) {
           console.error('GitHub読込エラー:', error);
-          alert('データの読み込みに失敗しました');
         }
       };
 
-      const saveToGitHub = async () => {
+      const saveToGitHub = async (dataToSave = scheduleData) => {
         if (!githubConfig.owner || !githubConfig.repo || !githubConfig.token) {
-          alert('GitHub設定を行ってください');
-          setShowSettings(true);
+          console.log('GitHub設定が未完了です');
           return;
         }
 
@@ -194,7 +181,7 @@
             console.log('新規ファイル作成');
           }
 
-          const content = btoa(unescape(encodeURIComponent(JSON.stringify(scheduleData, null, 2))));
+          const content = btoa(unescape(encodeURIComponent(JSON.stringify(dataToSave, null, 2))));
           
           const body = {
             message: `予定更新: ${new Date().toLocaleString('ja-JP')}`,
@@ -218,24 +205,37 @@
 
           if (response.ok) {
             setLastSaved(new Date());
-            alert('GitHubに保存しました！');
           } else {
             const errorData = await response.json();
             throw new Error(errorData.message);
           }
         } catch (error) {
           console.error('GitHub保存エラー:', error);
-          alert(`保存に失敗しました: ${error.message}`);
         } finally {
           setIsSaving(false);
         }
       };
 
+      // 初回読込
       useEffect(() => {
         if (isAuthenticated && githubConfig.owner && githubConfig.repo && githubConfig.token) {
           loadFromGitHub();
+        } else if (isAuthenticated && isAdmin) {
+          setShowSettings(true);
         }
       }, [isAuthenticated]);
+
+      // データ変更時に自動保存
+      useEffect(() => {
+        if (!isAdmin || !autoSaveEnabled) return;
+        if (!githubConfig.owner || !githubConfig.repo || !githubConfig.token) return;
+        
+        const timer = setTimeout(() => {
+          saveToGitHub();
+        }, 2000); // 2秒後に保存
+
+        return () => clearTimeout(timer);
+      }, [scheduleData]);
 
       const handleLogin = () => {
         if (passcode === 'admin123') {
@@ -380,32 +380,6 @@
         return null;
       };
 
-      const saveData = () => {
-        const dataStr = JSON.stringify(scheduleData, null, 2);
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `schedule_${currentYear}_${currentMonth + 1}.json`;
-        a.click();
-      };
-
-      const loadData = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            try {
-              const data = JSON.parse(event.target.result);
-              setScheduleData(data);
-            } catch (error) {
-              alert('ファイルの読み込みに失敗しました');
-            }
-          };
-          reader.readAsText(file);
-        }
-      };
-
       if (!isAuthenticated) {
         return (
           <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -459,7 +433,7 @@
                   )}
                   {lastSaved && (
                     <span className="text-xs text-gray-500">
-                      最終保存: {lastSaved.toLocaleTimeString('ja-JP')}
+                      {isSaving ? '保存中...' : `最終保存: ${lastSaved.toLocaleTimeString('ja-JP')}`}
                     </span>
                   )}
                 </div>
@@ -499,29 +473,12 @@
                     </button>
                   )}
                   {isAdmin && (
-                    <>
-                      <button 
-                        onClick={saveToGitHub} 
-                        disabled={isSaving}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50"
-                      >
-                        <Save className="w-4 h-4" />
-                        {isSaving ? '保存中...' : 'GitHub保存'}
-                      </button>
-                      <button 
-                        onClick={() => setShowSettings(true)} 
-                        className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 flex items-center gap-2"
-                      >
-                        <Settings className="w-4 h-4" />設定
-                      </button>
-                      <button onClick={saveData} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2">
-                        <Download className="w-4 h-4" />DL
-                      </button>
-                      <label className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 flex items-center gap-2 cursor-pointer">
-                        <Upload className="w-4 h-4" />読込
-                        <input type="file" accept=".json" onChange={loadData} className="hidden" />
-                      </label>
-                    </>
+                    <button 
+                      onClick={() => setShowSettings(true)} 
+                      className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 flex items-center gap-2"
+                    >
+                      <Settings className="w-4 h-4" />設定
+                    </button>
                   )}
                 </div>
               </div>
@@ -688,6 +645,9 @@
                       <p className="text-xs text-gray-600 mt-1">
                         権限: repo (Full control of private repositories)
                       </p>
+                      <p className="text-xs text-green-600 mt-1">
+                        ✓ 一度設定すれば、次回から自動的に読み込まれます
+                      </p>
                     </div>
                   </div>
 
@@ -701,6 +661,11 @@
                       <li>Select scopes: ✓ repo (全てチェック)</li>
                       <li>「Generate token」→ トークンをコピーして上記に貼り付け</li>
                     </ol>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
+                    <h4 className="font-semibold text-sm mb-2">💾 自動保存について:</h4>
+                    <p className="text-xs">予定を編集すると、2秒後に自動的にGitHubへ保存されます。トークン情報はブラウザに保存されるため、次回アクセス時も設定不要です。</p>
                   </div>
 
                   <div className="flex gap-2">
