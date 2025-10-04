@@ -54,5 +54,47 @@
     "isGrouped": true,
     "groupIndex": 7,
     "groupLength": 8
+  },
+  "2025-10-01_17:00": {
+    "color": "purple-medium",
+    "text": "内定式",
+    "isGrouped": true,
+    "groupIndex": 0,
+    "groupLength": 6
+  },
+  "2025-10-01_17:30": {
+    "color": "purple-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 1,
+    "groupLength": 6
+  },
+  "2025-10-01_18:00": {
+    "color": "purple-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 2,
+    "groupLength": 6
+  },
+  "2025-10-01_18:30": {
+    "color": "purple-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 3,
+    "groupLength": 6
+  },
+  "2025-10-01_19:00": {
+    "color": "purple-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 4,
+    "groupLength": 6
+  },
+  "2025-10-01_19:30": {
+    "color": "purple-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 5,
+    "groupLength": 6
   }
 }
