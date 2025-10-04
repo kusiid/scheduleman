@@ -112,25 +112,25 @@
     "groupLength": 19
   },
   "2025-10-05_12:30": {
-    "color": "blue-light",
-    "text": "",
+    "color": "purple-light",
+    "text": "home",
     "isGrouped": true,
-    "groupIndex": 10,
-    "groupLength": 19
+    "groupIndex": 0,
+    "groupLength": 3
   },
   "2025-10-05_13:00": {
-    "color": "blue-light",
+    "color": "purple-light",
     "text": "",
     "isGrouped": true,
-    "groupIndex": 11,
-    "groupLength": 19
+    "groupIndex": 1,
+    "groupLength": 3
   },
   "2025-10-05_13:30": {
-    "color": "blue-light",
+    "color": "purple-light",
     "text": "",
     "isGrouped": true,
-    "groupIndex": 12,
-    "groupLength": 19
+    "groupIndex": 2,
+    "groupLength": 3
   },
   "2025-10-05_14:00": {
     "color": "blue-light",
