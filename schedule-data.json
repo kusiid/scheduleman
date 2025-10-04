@@ -1,1 +1,58 @@
-{}
+{
+  "2025-10-01_04:00": {
+    "color": "orange-medium",
+    "text": "C",
+    "isGrouped": true,
+    "groupIndex": 0,
+    "groupLength": 8
+  },
+  "2025-10-01_04:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 1,
+    "groupLength": 8
+  },
+  "2025-10-01_05:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 2,
+    "groupLength": 8
+  },
+  "2025-10-01_05:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 3,
+    "groupLength": 8
+  },
+  "2025-10-01_06:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 4,
+    "groupLength": 8
+  },
+  "2025-10-01_06:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 5,
+    "groupLength": 8
+  },
+  "2025-10-01_07:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 6,
+    "groupLength": 8
+  },
+  "2025-10-01_07:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 7,
+    "groupLength": 8
+  }
+}
