@@ -1,679 +1,731 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Lock, Eye, Save, Download, Upload, Settings } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>予定管理システム</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
 
-const ScheduleManager = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [passcode, setPasscode] = useState('');
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [scheduleData, setScheduleData] = useState({});
-  const [selectedColor, setSelectedColor] = useState('blue-light');
-  const [selectedCells, setSelectedCells] = useState([]);
-  const [editText, setEditText] = useState('');
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState(null);
-  const [dragEnd, setDragEnd] = useState(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState(null);
+  <script type="text/babel">
+    const { useState, useEffect } = React;
 
-  // GitHub設定（初回のみ設定が必要）
-  const [githubConfig, setGithubConfig] = useState({
-    owner: '', // GitHubユーザー名
-    repo: '', // リポジトリ名
-    token: '', // Personal Access Token
-    branch: 'main',
-    filePath: 'schedule-data.json'
-  });
-
-  // 本日の日付
-  const today = new Date();
-  const isCurrentMonth = currentYear === today.getFullYear() && currentMonth === today.getMonth();
-  
-  // 本日に戻る
-  const goToToday = () => {
-    setCurrentYear(today.getFullYear());
-    setCurrentMonth(today.getMonth());
-  };
-
-  // 24色パレット
-  const colors = {
-    'red-dark': '#991B1B', 'red-medium': '#DC2626', 'red-light': '#FCA5A5',
-    'orange-dark': '#9A3412', 'orange-medium': '#EA580C', 'orange-light': '#FDBA74',
-    'yellow-dark': '#854D0E', 'yellow-medium': '#CA8A04', 'yellow-light': '#FDE047',
-    'green-dark': '#166534', 'green-medium': '#16A34A', 'green-light': '#86EFAC',
-    'blue-dark': '#1E3A8A', 'blue-medium': '#2563EB', 'blue-light': '#93C5FD',
-    'purple-dark': '#6B21A8', 'purple-medium': '#9333EA', 'purple-light': '#D8B4FE',
-    'pink-dark': '#9F1239', 'pink-medium': '#E11D48', 'pink-light': '#FBCFE8',
-    'gray-dark': '#374151', 'gray-medium': '#6B7280', 'gray-light': '#D1D5DB'
-  };
-
-  // 時間列（4:00～27:30）
-  const timeSlots = Array.from({ length: 48 }, (_, i) => {
-    const totalHalfHours = i + 8;
-    const hour = Math.floor(totalHalfHours / 2);
-    const minute = totalHalfHours % 2 === 0 ? '00' : '30';
-    return `${hour.toString().padStart(2, '0')}:${minute}`;
-  });
-
-  const timeHeaders = Array.from({ length: 24 }, (_, i) => i + 4);
-
-  const getDaysInMonth = (year, month) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-  
-  const daysInCurrentMonth = getDaysInMonth(currentYear, currentMonth);
-  const days = Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1);
-
-  // GitHub設定を保存（ブラウザのメモリに保存）
-  const saveGithubConfig = (config) => {
-    setGithubConfig(config);
-    // 実際の環境ではlocalStorageに保存しますが、ここではメモリのみ
-    setShowSettings(false);
-    loadFromGitHub(config);
-  };
-
-  // GitHubからデータ読込
-  const loadFromGitHub = async (config = githubConfig) => {
-    if (!config.owner || !config.repo || !config.token) {
-      console.log('GitHub設定が未完了です');
-      return;
-    }
-
-    try {
-      const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.filePath}`;
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `token ${config.token}`,
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const content = atob(data.content);
-        const scheduleJson = JSON.parse(content);
-        setScheduleData(scheduleJson);
-        setLastSaved(new Date());
-      } else if (response.status === 404) {
-        // ファイルが存在しない場合は新規作成
-        console.log('データファイルが存在しません。新規作成します。');
-        setScheduleData({});
-      }
-    } catch (error) {
-      console.error('GitHub読込エラー:', error);
-      alert('データの読み込みに失敗しました');
-    }
-  };
-
-  // GitHubにデータ保存
-  const saveToGitHub = async () => {
-    if (!githubConfig.owner || !githubConfig.repo || !githubConfig.token) {
-      alert('GitHub設定を行ってください');
-      setShowSettings(true);
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const url = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.filePath}`;
-      
-      // 既存ファイルのSHAを取得
-      let sha = null;
-      try {
-        const getResponse = await fetch(url, {
-          headers: {
-            'Authorization': `token ${githubConfig.token}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        });
-        if (getResponse.ok) {
-          const fileData = await getResponse.json();
-          sha = fileData.sha;
-        }
-      } catch (e) {
-        console.log('新規ファイル作成');
-      }
-
-      // データをBase64エンコード
-      const content = btoa(unescape(encodeURIComponent(JSON.stringify(scheduleData, null, 2))));
-      
-      const body = {
-        message: `予定更新: ${new Date().toLocaleString('ja-JP')}`,
-        content: content,
-        branch: githubConfig.branch
-      };
-      
-      if (sha) {
-        body.sha = sha;
-      }
-
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${githubConfig.token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      });
-
-      if (response.ok) {
-        setLastSaved(new Date());
-        alert('GitHubに保存しました！');
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message);
-      }
-    } catch (error) {
-      console.error('GitHub保存エラー:', error);
-      alert(`保存に失敗しました: ${error.message}`);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // 初回読込
-  useEffect(() => {
-    if (isAuthenticated && githubConfig.owner && githubConfig.repo && githubConfig.token) {
-      loadFromGitHub();
-    }
-  }, [isAuthenticated]);
-
-  // 認証処理
-  const handleLogin = () => {
-    if (passcode === 'admin123') {
-      setIsAuthenticated(true);
-      setIsAdmin(true);
-    } else if (passcode === 'view123') {
-      setIsAuthenticated(true);
-      setIsAdmin(false);
-    } else {
-      alert('パスコードが正しくありません');
-    }
-  };
-
-  // ドラッグ処理
-  const handleMouseDown = (day, time) => {
-    if (!isAdmin) return;
-    setIsDragging(true);
-    setDragStart({ day, time });
-    setDragEnd({ day, time });
-  };
-
-  const handleMouseEnter = (day, time) => {
-    if (!isAdmin || !isDragging) return;
-    if (day === dragStart.day) {
-      setDragEnd({ day, time });
-    }
-  };
-
-  const handleMouseUp = () => {
-    if (!isAdmin || !isDragging) return;
-    setIsDragging(false);
-    
-    if (dragStart && dragEnd) {
-      const startIdx = timeSlots.indexOf(dragStart.time);
-      const endIdx = timeSlots.indexOf(dragEnd.time);
-      const minIdx = Math.min(startIdx, endIdx);
-      const maxIdx = Math.max(startIdx, endIdx);
-      
-      const cells = [];
-      for (let i = minIdx; i <= maxIdx; i++) {
-        const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${dragStart.day.toString().padStart(2, '0')}_${timeSlots[i]}`;
-        cells.push(key);
-      }
-      setSelectedCells(cells);
-      
-      const firstKey = cells[0];
-      setEditText(scheduleData[firstKey]?.text || '');
-    }
-  };
-
-  const isCellInSelection = (day, time) => {
-    if (!isDragging || !dragStart || !dragEnd) return false;
-    if (day !== dragStart.day) return false;
-    
-    const timeIdx = timeSlots.indexOf(time);
-    const startIdx = timeSlots.indexOf(dragStart.time);
-    const endIdx = timeSlots.indexOf(dragEnd.time);
-    const minIdx = Math.min(startIdx, endIdx);
-    const maxIdx = Math.max(startIdx, endIdx);
-    
-    return timeIdx >= minIdx && timeIdx <= maxIdx;
-  };
-
-  const updateCell = () => {
-    if (selectedCells.length === 0) return;
-    const newData = { ...scheduleData };
-    
-    if (editText.trim() === '') {
-      selectedCells.forEach(key => {
-        delete newData[key];
-      });
-    } else {
-      selectedCells.forEach((key, index) => {
-        newData[key] = {
-          color: selectedColor,
-          text: index === 0 ? editText : '',
-          isGrouped: selectedCells.length > 1,
-          groupIndex: index,
-          groupLength: selectedCells.length
-        };
-      });
-    }
-    
-    setScheduleData(newData);
-    setSelectedCells([]);
-    setEditText('');
-  };
-
-  const getCellStyle = (day, time) => {
-    const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${time}`;
-    const cellData = scheduleData[key];
-    if (!cellData) return { backgroundColor: 'white', color: 'black' };
-    
-    const baseStyle = {
-      backgroundColor: colors[cellData.color],
-      color: (cellData.color.includes('dark') || cellData.color.includes('medium')) ? 'white' : 'black'
-    };
-    
-    if (cellData.isGrouped) {
-      return {
-        ...baseStyle,
-        borderRight: cellData.groupIndex < cellData.groupLength - 1 ? '1px solid rgba(0,0,0,0.1)' : undefined
-      };
-    }
-    
-    return baseStyle;
-  };
-
-  const getCellText = (day, time) => {
-    const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${time}`;
-    const cellData = scheduleData[key];
-    return cellData?.text || '';
-  };
-
-  const getCellTooltip = (day, time) => {
-    const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${time}`;
-    const cellData = scheduleData[key];
-    if (!cellData) return '';
-    
-    if (cellData.isGrouped && cellData.groupIndex > 0) {
-      const timeIdx = timeSlots.indexOf(time);
-      const startTimeIdx = timeIdx - cellData.groupIndex;
-      if (startTimeIdx >= 0) {
-        const startTime = timeSlots[startTimeIdx];
-        const startKey = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${startTime}`;
-        return scheduleData[startKey]?.text || '';
-      }
-    }
-    
-    return cellData.text || '';
-  };
-
-  const hasTextOnRight = (day, time) => {
-    const timeIdx = timeSlots.indexOf(time);
-    for (let i = timeIdx + 1; i < timeSlots.length; i++) {
-      const nextTime = timeSlots[i];
-      const nextKey = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${nextTime}`;
-      const nextData = scheduleData[nextKey];
-      if (nextData?.text) {
-        return i - timeIdx;
-      }
-    }
-    return null;
-  };
-
-  const saveData = () => {
-    const dataStr = JSON.stringify(scheduleData, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `schedule_${currentYear}_${currentMonth + 1}.json`;
-    a.click();
-  };
-
-  const loadData = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const data = JSON.parse(event.target.result);
-          setScheduleData(data);
-        } catch (error) {
-          alert('ファイルの読み込みに失敗しました');
-        }
-      };
-      reader.readAsText(file);
-    }
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
-          <div className="flex items-center justify-center mb-6">
-            <Lock className="w-12 h-12 text-indigo-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">予定管理システム</h1>
-          <div className="space-y-4">
-            <input
-              type="password"
-              placeholder="パスコードを入力"
-              value={passcode}
-              onChange={(e) => setPasscode(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-            <button
-              onClick={handleLogin}
-              className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition"
-            >
-              ログイン
-            </button>
-            <div className="text-sm text-gray-600 mt-4 p-3 bg-gray-50 rounded">
-              <p className="font-semibold mb-1">デモ用パスコード:</p>
-              <p>管理者: <code className="bg-white px-2 py-1 rounded">admin123</code></p>
-              <p>閲覧者: <code className="bg-white px-2 py-1 rounded">view123</code></p>
-            </div>
-          </div>
-        </div>
-      </div>
+    // Lucide Icons (SVG)
+    const Calendar = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
     );
-  }
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-full mx-auto">
-        {/* ヘッダー */}
-        <div className="bg-white rounded-lg shadow p-4 mb-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <Calendar className="w-6 h-6 text-indigo-600" />
-              <h1 className="text-xl font-bold text-gray-800">
-                {currentYear}年 {currentMonth + 1}月
-              </h1>
-              {isAdmin ? (
-                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">管理者モード</span>
-              ) : (
-                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-                  <Eye className="w-4 h-4" />閲覧モード
-                </span>
-              )}
-              {lastSaved && (
-                <span className="text-xs text-gray-500">
-                  最終保存: {lastSaved.toLocaleTimeString('ja-JP')}
-                </span>
-              )}
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => {
-                  if (currentMonth === 0) {
-                    setCurrentMonth(11);
-                    setCurrentYear(currentYear - 1);
-                  } else {
-                    setCurrentMonth(currentMonth - 1);
-                  }
-                }}
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-              >
-                前月
-              </button>
-              <button
-                onClick={() => {
-                  if (currentMonth === 11) {
-                    setCurrentMonth(0);
-                    setCurrentYear(currentYear + 1);
-                  } else {
-                    setCurrentMonth(currentMonth + 1);
-                  }
-                }}
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-              >
-                次月
-              </button>
-              {!isCurrentMonth && (
-                <button
-                  onClick={goToToday}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  本日に戻る
-                </button>
-              )}
-              {isAdmin && (
-                <>
-                  <button 
-                    onClick={saveToGitHub} 
-                    disabled={isSaving}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50"
-                  >
-                    <Save className="w-4 h-4" />
-                    {isSaving ? '保存中...' : 'GitHub保存'}
-                  </button>
-                  <button 
-                    onClick={() => setShowSettings(true)} 
-                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 flex items-center gap-2"
-                  >
-                    <Settings className="w-4 h-4" />設定
-                  </button>
-                  <button onClick={saveData} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2">
-                    <Download className="w-4 h-4" />DL
-                  </button>
-                  <label className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 flex items-center gap-2 cursor-pointer">
-                    <Upload className="w-4 h-4" />読込
-                    <input type="file" accept=".json" onChange={loadData} className="hidden" />
-                  </label>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+    const Lock = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+    );
 
-        {/* カラーパレット */}
-        {isAdmin && (
-          <div className="bg-white rounded-lg shadow p-4 mb-4">
-            <h3 className="text-sm font-semibold mb-2">カラーパレット</h3>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(colors).map(([name, color]) => (
-                <button
-                  key={name}
-                  onClick={() => setSelectedColor(name)}
-                  className={`w-10 h-10 rounded border-2 ${selectedColor === name ? 'border-black' : 'border-gray-300'}`}
-                  style={{ backgroundColor: color }}
-                  title={name}
+    const Eye = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    );
+
+    const Save = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+        <polyline points="7 3 7 8 15 8"></polyline>
+      </svg>
+    );
+
+    const Download = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+    );
+
+    const Upload = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="17 8 12 3 7 8"></polyline>
+        <line x1="12" y1="3" x2="12" y2="15"></line>
+      </svg>
+    );
+
+    const Settings = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"></path>
+      </svg>
+    );
+
+    const ScheduleManager = () => {
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [isAdmin, setIsAdmin] = useState(false);
+      const [passcode, setPasscode] = useState('');
+      const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+      const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+      const [scheduleData, setScheduleData] = useState({});
+      const [selectedColor, setSelectedColor] = useState('blue-light');
+      const [selectedCells, setSelectedCells] = useState([]);
+      const [editText, setEditText] = useState('');
+      const [isDragging, setIsDragging] = useState(false);
+      const [dragStart, setDragStart] = useState(null);
+      const [dragEnd, setDragEnd] = useState(null);
+      const [showSettings, setShowSettings] = useState(false);
+      const [isSaving, setIsSaving] = useState(false);
+      const [lastSaved, setLastSaved] = useState(null);
+
+      const [githubConfig, setGithubConfig] = useState({
+        owner: '',
+        repo: '',
+        token: '',
+        branch: 'main',
+        filePath: 'schedule-data.json'
+      });
+
+      const today = new Date();
+      const isCurrentMonth = currentYear === today.getFullYear() && currentMonth === today.getMonth();
+      
+      const goToToday = () => {
+        setCurrentYear(today.getFullYear());
+        setCurrentMonth(today.getMonth());
+      };
+
+      const colors = {
+        'red-dark': '#991B1B', 'red-medium': '#DC2626', 'red-light': '#FCA5A5',
+        'orange-dark': '#9A3412', 'orange-medium': '#EA580C', 'orange-light': '#FDBA74',
+        'yellow-dark': '#854D0E', 'yellow-medium': '#CA8A04', 'yellow-light': '#FDE047',
+        'green-dark': '#166534', 'green-medium': '#16A34A', 'green-light': '#86EFAC',
+        'blue-dark': '#1E3A8A', 'blue-medium': '#2563EB', 'blue-light': '#93C5FD',
+        'purple-dark': '#6B21A8', 'purple-medium': '#9333EA', 'purple-light': '#D8B4FE',
+        'pink-dark': '#9F1239', 'pink-medium': '#E11D48', 'pink-light': '#FBCFE8',
+        'gray-dark': '#374151', 'gray-medium': '#6B7280', 'gray-light': '#D1D5DB'
+      };
+
+      const timeSlots = Array.from({ length: 48 }, (_, i) => {
+        const totalHalfHours = i + 8;
+        const hour = Math.floor(totalHalfHours / 2);
+        const minute = totalHalfHours % 2 === 0 ? '00' : '30';
+        return `${hour.toString().padStart(2, '0')}:${minute}`;
+      });
+
+      const timeHeaders = Array.from({ length: 24 }, (_, i) => i + 4);
+
+      const getDaysInMonth = (year, month) => {
+        return new Date(year, month + 1, 0).getDate();
+      };
+      
+      const daysInCurrentMonth = getDaysInMonth(currentYear, currentMonth);
+      const days = Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1);
+
+      const saveGithubConfig = (config) => {
+        setGithubConfig(config);
+        setShowSettings(false);
+        loadFromGitHub(config);
+      };
+
+      const loadFromGitHub = async (config = githubConfig) => {
+        if (!config.owner || !config.repo || !config.token) {
+          console.log('GitHub設定が未完了です');
+          return;
+        }
+
+        try {
+          const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.filePath}`;
+          const response = await fetch(url, {
+            headers: {
+              'Authorization': `token ${config.token}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const content = atob(data.content);
+            const scheduleJson = JSON.parse(content);
+            setScheduleData(scheduleJson);
+            setLastSaved(new Date());
+          } else if (response.status === 404) {
+            console.log('データファイルが存在しません。新規作成します。');
+            setScheduleData({});
+          }
+        } catch (error) {
+          console.error('GitHub読込エラー:', error);
+          alert('データの読み込みに失敗しました');
+        }
+      };
+
+      const saveToGitHub = async () => {
+        if (!githubConfig.owner || !githubConfig.repo || !githubConfig.token) {
+          alert('GitHub設定を行ってください');
+          setShowSettings(true);
+          return;
+        }
+
+        setIsSaving(true);
+        try {
+          const url = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.filePath}`;
+          
+          let sha = null;
+          try {
+            const getResponse = await fetch(url, {
+              headers: {
+                'Authorization': `token ${githubConfig.token}`,
+                'Accept': 'application/vnd.github.v3+json'
+              }
+            });
+            if (getResponse.ok) {
+              const fileData = await getResponse.json();
+              sha = fileData.sha;
+            }
+          } catch (e) {
+            console.log('新規ファイル作成');
+          }
+
+          const content = btoa(unescape(encodeURIComponent(JSON.stringify(scheduleData, null, 2))));
+          
+          const body = {
+            message: `予定更新: ${new Date().toLocaleString('ja-JP')}`,
+            content: content,
+            branch: githubConfig.branch
+          };
+          
+          if (sha) {
+            body.sha = sha;
+          }
+
+          const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `token ${githubConfig.token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+          });
+
+          if (response.ok) {
+            setLastSaved(new Date());
+            alert('GitHubに保存しました！');
+          } else {
+            const errorData = await response.json();
+            throw new Error(errorData.message);
+          }
+        } catch (error) {
+          console.error('GitHub保存エラー:', error);
+          alert(`保存に失敗しました: ${error.message}`);
+        } finally {
+          setIsSaving(false);
+        }
+      };
+
+      useEffect(() => {
+        if (isAuthenticated && githubConfig.owner && githubConfig.repo && githubConfig.token) {
+          loadFromGitHub();
+        }
+      }, [isAuthenticated]);
+
+      const handleLogin = () => {
+        if (passcode === 'admin123') {
+          setIsAuthenticated(true);
+          setIsAdmin(true);
+        } else if (passcode === 'view123') {
+          setIsAuthenticated(true);
+          setIsAdmin(false);
+        } else {
+          alert('パスコードが正しくありません');
+        }
+      };
+
+      const handleMouseDown = (day, time) => {
+        if (!isAdmin) return;
+        setIsDragging(true);
+        setDragStart({ day, time });
+        setDragEnd({ day, time });
+      };
+
+      const handleMouseEnter = (day, time) => {
+        if (!isAdmin || !isDragging) return;
+        if (day === dragStart.day) {
+          setDragEnd({ day, time });
+        }
+      };
+
+      const handleMouseUp = () => {
+        if (!isAdmin || !isDragging) return;
+        setIsDragging(false);
+        
+        if (dragStart && dragEnd) {
+          const startIdx = timeSlots.indexOf(dragStart.time);
+          const endIdx = timeSlots.indexOf(dragEnd.time);
+          const minIdx = Math.min(startIdx, endIdx);
+          const maxIdx = Math.max(startIdx, endIdx);
+          
+          const cells = [];
+          for (let i = minIdx; i <= maxIdx; i++) {
+            const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${dragStart.day.toString().padStart(2, '0')}_${timeSlots[i]}`;
+            cells.push(key);
+          }
+          setSelectedCells(cells);
+          
+          const firstKey = cells[0];
+          setEditText(scheduleData[firstKey]?.text || '');
+        }
+      };
+
+      const isCellInSelection = (day, time) => {
+        if (!isDragging || !dragStart || !dragEnd) return false;
+        if (day !== dragStart.day) return false;
+        
+        const timeIdx = timeSlots.indexOf(time);
+        const startIdx = timeSlots.indexOf(dragStart.time);
+        const endIdx = timeSlots.indexOf(dragEnd.time);
+        const minIdx = Math.min(startIdx, endIdx);
+        const maxIdx = Math.max(startIdx, endIdx);
+        
+        return timeIdx >= minIdx && timeIdx <= maxIdx;
+      };
+
+      const updateCell = () => {
+        if (selectedCells.length === 0) return;
+        const newData = { ...scheduleData };
+        
+        if (editText.trim() === '') {
+          selectedCells.forEach(key => {
+            delete newData[key];
+          });
+        } else {
+          selectedCells.forEach((key, index) => {
+            newData[key] = {
+              color: selectedColor,
+              text: index === 0 ? editText : '',
+              isGrouped: selectedCells.length > 1,
+              groupIndex: index,
+              groupLength: selectedCells.length
+            };
+          });
+        }
+        
+        setScheduleData(newData);
+        setSelectedCells([]);
+        setEditText('');
+      };
+
+      const getCellStyle = (day, time) => {
+        const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${time}`;
+        const cellData = scheduleData[key];
+        if (!cellData) return { backgroundColor: 'white', color: 'black' };
+        
+        const baseStyle = {
+          backgroundColor: colors[cellData.color],
+          color: (cellData.color.includes('dark') || cellData.color.includes('medium')) ? 'white' : 'black'
+        };
+        
+        if (cellData.isGrouped) {
+          return {
+            ...baseStyle,
+            borderRight: cellData.groupIndex < cellData.groupLength - 1 ? '1px solid rgba(0,0,0,0.1)' : undefined
+          };
+        }
+        
+        return baseStyle;
+      };
+
+      const getCellText = (day, time) => {
+        const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${time}`;
+        const cellData = scheduleData[key];
+        return cellData?.text || '';
+      };
+
+      const getCellTooltip = (day, time) => {
+        const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${time}`;
+        const cellData = scheduleData[key];
+        if (!cellData) return '';
+        
+        if (cellData.isGrouped && cellData.groupIndex > 0) {
+          const timeIdx = timeSlots.indexOf(time);
+          const startTimeIdx = timeIdx - cellData.groupIndex;
+          if (startTimeIdx >= 0) {
+            const startTime = timeSlots[startTimeIdx];
+            const startKey = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${startTime}`;
+            return scheduleData[startKey]?.text || '';
+          }
+        }
+        
+        return cellData.text || '';
+      };
+
+      const hasTextOnRight = (day, time) => {
+        const timeIdx = timeSlots.indexOf(time);
+        for (let i = timeIdx + 1; i < timeSlots.length; i++) {
+          const nextTime = timeSlots[i];
+          const nextKey = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${nextTime}`;
+          const nextData = scheduleData[nextKey];
+          if (nextData?.text) {
+            return i - timeIdx;
+          }
+        }
+        return null;
+      };
+
+      const saveData = () => {
+        const dataStr = JSON.stringify(scheduleData, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `schedule_${currentYear}_${currentMonth + 1}.json`;
+        a.click();
+      };
+
+      const loadData = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            try {
+              const data = JSON.parse(event.target.result);
+              setScheduleData(data);
+            } catch (error) {
+              alert('ファイルの読み込みに失敗しました');
+            }
+          };
+          reader.readAsText(file);
+        }
+      };
+
+      if (!isAuthenticated) {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+              <div className="flex items-center justify-center mb-6">
+                <Lock className="w-12 h-12 text-indigo-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">予定管理システム</h1>
+              <div className="space-y-4">
+                <input
+                  type="password"
+                  placeholder="パスコードを入力"
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
-              ))}
+                <button
+                  onClick={handleLogin}
+                  className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition"
+                >
+                  ログイン
+                </button>
+                <div className="text-sm text-gray-600 mt-4 p-3 bg-gray-50 rounded">
+                  <p className="font-semibold mb-1">デモ用パスコード:</p>
+                  <p>管理者: <code className="bg-white px-2 py-1 rounded">admin123</code></p>
+                  <p>閲覧者: <code className="bg-white px-2 py-1 rounded">view123</code></p>
+                </div>
+              </div>
             </div>
           </div>
-        )}
+        );
+      }
 
-        {/* 予定表 */}
-        <div className="bg-white rounded-lg shadow overflow-auto">
-          <table className="border-collapse w-full text-xs">
-            <thead>
-              <tr>
-                <th className="border border-gray-300 bg-gray-100 p-1 sticky left-0 z-10 w-8">日</th>
-                {timeHeaders.map((hour, i) => (
-                  <th key={i} colSpan="2" className="border border-gray-300 bg-gray-100 p-1 w-16">{hour}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {days.map((day) => {
-                const isToday = isCurrentMonth && day === today.getDate();
-                return (
-                  <tr key={day}>
-                    <td 
-                      className={`border border-gray-300 font-bold text-center p-1 sticky left-0 z-10 w-8 ${
-                        isToday ? 'bg-black text-white' : 'bg-gray-100'
-                      }`}
+      return (
+        <div className="min-h-screen bg-gray-50 p-4">
+          <div className="max-w-full mx-auto">
+            <div className="bg-white rounded-lg shadow p-4 mb-4">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-4">
+                  <Calendar className="w-6 h-6 text-indigo-600" />
+                  <h1 className="text-xl font-bold text-gray-800">
+                    {currentYear}年 {currentMonth + 1}月
+                  </h1>
+                  {isAdmin ? (
+                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">管理者モード</span>
+                  ) : (
+                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                      <Eye className="w-4 h-4" />閲覧モード
+                    </span>
+                  )}
+                  {lastSaved && (
+                    <span className="text-xs text-gray-500">
+                      最終保存: {lastSaved.toLocaleTimeString('ja-JP')}
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => {
+                      if (currentMonth === 0) {
+                        setCurrentMonth(11);
+                        setCurrentYear(currentYear - 1);
+                      } else {
+                        setCurrentMonth(currentMonth - 1);
+                      }
+                    }}
+                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  >
+                    前月
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (currentMonth === 11) {
+                        setCurrentMonth(0);
+                        setCurrentYear(currentYear + 1);
+                      } else {
+                        setCurrentMonth(currentMonth + 1);
+                      }
+                    }}
+                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  >
+                    次月
+                  </button>
+                  {!isCurrentMonth && (
+                    <button
+                      onClick={goToToday}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                     >
-                      {day}
-                    </td>
-                    {timeSlots.map((time, i) => {
-                      const isSelected = isCellInSelection(day, time);
-                      const cellText = getCellText(day, time);
-                      const tooltip = getCellTooltip(day, time);
-                      const distanceToNext = hasTextOnRight(day, time);
-                      
-                      const hasText = cellText.length > 0;
-                      const maxWidth = distanceToNext ? `${distanceToNext * 2}rem` : 'none';
-                      
-                      return (
-                        <td
-                          key={i}
-                          className={`border border-gray-300 p-0.5 cursor-pointer hover:opacity-80 w-8 h-6 relative ${isSelected ? 'ring-2 ring-indigo-600 z-20' : ''}`}
-                          style={{
-                            ...getCellStyle(day, time),
-                            backgroundColor: isSelected ? 'rgba(99, 102, 241, 0.3)' : getCellStyle(day, time).backgroundColor
-                          }}
-                          onMouseDown={() => handleMouseDown(day, time)}
-                          onMouseEnter={() => handleMouseEnter(day, time)}
-                          onMouseUp={handleMouseUp}
-                          title={tooltip}
-                        >
-                          {hasText && (
-                            <div 
-                              className="absolute left-0.5 top-0.5 text-[10px] font-semibold leading-tight whitespace-nowrap z-10"
-                              style={{ 
-                                maxWidth: maxWidth,
-                                overflow: 'hidden',
-                                textOverflow: distanceToNext ? 'ellipsis' : 'clip'
-                              }}
-                            >
-                              {cellText}
-                            </div>
-                          )}
-                        </td>
-                      );
-                    })}
+                      本日に戻る
+                    </button>
+                  )}
+                  {isAdmin && (
+                    <>
+                      <button 
+                        onClick={saveToGitHub} 
+                        disabled={isSaving}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50"
+                      >
+                        <Save className="w-4 h-4" />
+                        {isSaving ? '保存中...' : 'GitHub保存'}
+                      </button>
+                      <button 
+                        onClick={() => setShowSettings(true)} 
+                        className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 flex items-center gap-2"
+                      >
+                        <Settings className="w-4 h-4" />設定
+                      </button>
+                      <button onClick={saveData} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2">
+                        <Download className="w-4 h-4" />DL
+                      </button>
+                      <label className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 flex items-center gap-2 cursor-pointer">
+                        <Upload className="w-4 h-4" />読込
+                        <input type="file" accept=".json" onChange={loadData} className="hidden" />
+                      </label>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {isAdmin && (
+              <div className="bg-white rounded-lg shadow p-4 mb-4">
+                <h3 className="text-sm font-semibold mb-2">カラーパレット</h3>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(colors).map(([name, color]) => (
+                    <button
+                      key={name}
+                      onClick={() => setSelectedColor(name)}
+                      className={`w-10 h-10 rounded border-2 ${selectedColor === name ? 'border-black' : 'border-gray-300'}`}
+                      style={{ backgroundColor: color }}
+                      title={name}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="bg-white rounded-lg shadow overflow-auto">
+              <table className="border-collapse w-full text-xs">
+                <thead>
+                  <tr>
+                    <th className="border border-gray-300 bg-gray-100 p-1 sticky left-0 z-10 w-8">日</th>
+                    {timeHeaders.map((hour, i) => (
+                      <th key={i} colSpan="2" className="border border-gray-300 bg-gray-100 p-1 w-16">{hour}</th>
+                    ))}
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* 編集モーダル */}
-        {selectedCells.length > 0 && isAdmin && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-96">
-              <h3 className="text-lg font-bold mb-2">予定を編集</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                {selectedCells.length}個のセルを選択中
-                {selectedCells.length > 1 && ` (${selectedCells.length * 0.5}時間)`}
-              </p>
-              <input
-                type="text"
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                placeholder="予定を入力（空欄で削除）"
-                className="w-full px-3 py-2 border rounded mb-4"
-                autoFocus
-                onKeyPress={(e) => e.key === 'Enter' && updateCell()}
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={updateCell}
-                  className="flex-1 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
-                >
-                  保存
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedCells([]);
-                    setEditText('');
-                  }}
-                  className="flex-1 bg-gray-300 py-2 rounded hover:bg-gray-400"
-                >
-                  キャンセル
-                </button>
-              </div>
+                </thead>
+                <tbody>
+                  {days.map((day) => {
+                    const isToday = isCurrentMonth && day === today.getDate();
+                    return (
+                      <tr key={day}>
+                        <td 
+                          className={`border border-gray-300 font-bold text-center p-1 sticky left-0 z-10 w-8 ${
+                            isToday ? 'bg-black text-white' : 'bg-gray-100'
+                          }`}
+                        >
+                          {day}
+                        </td>
+                        {timeSlots.map((time, i) => {
+                          const isSelected = isCellInSelection(day, time);
+                          const cellText = getCellText(day, time);
+                          const tooltip = getCellTooltip(day, time);
+                          const distanceToNext = hasTextOnRight(day, time);
+                          
+                          const hasText = cellText.length > 0;
+                          const maxWidth = distanceToNext ? `${distanceToNext * 2}rem` : 'none';
+                          
+                          return (
+                            <td
+                              key={i}
+                              className={`border border-gray-300 p-0.5 cursor-pointer hover:opacity-80 w-8 h-6 relative ${isSelected ? 'ring-2 ring-indigo-600 z-20' : ''}`}
+                              style={{
+                                ...getCellStyle(day, time),
+                                backgroundColor: isSelected ? 'rgba(99, 102, 241, 0.3)' : getCellStyle(day, time).backgroundColor
+                              }}
+                              onMouseDown={() => handleMouseDown(day, time)}
+                              onMouseEnter={() => handleMouseEnter(day, time)}
+                              onMouseUp={handleMouseUp}
+                              title={tooltip}
+                            >
+                              {hasText && (
+                                <div 
+                                  className="absolute left-0.5 top-0.5 text-[10px] font-semibold leading-tight whitespace-nowrap z-10"
+                                  style={{ 
+                                    maxWidth: maxWidth,
+                                    overflow: 'hidden',
+                                    textOverflow: distanceToNext ? 'ellipsis' : 'clip'
+                                  }}
+                                >
+                                  {cellText}
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </div>
-        )}
 
-        {/* GitHub設定モーダル */}
-        {showSettings && isAdmin && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <h3 className="text-lg font-bold mb-4">GitHub設定</h3>
-              
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label className="block text-sm font-semibold mb-1">GitHubユーザー名</label>
-                  <input
-                    type="text"
-                    value={githubConfig.owner}
-                    onChange={(e) => setGithubConfig({...githubConfig, owner: e.target.value})}
-                    placeholder="例: your-username"
-                    className="w-full px-3 py-2 border rounded"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold mb-1">リポジトリ名</label>
-                  <input
-                    type="text"
-                    value={githubConfig.repo}
-                    onChange={(e) => setGithubConfig({...githubConfig, repo: e.target.value})}
-                    placeholder="例: schedule-manager"
-                    className="w-full px-3 py-2 border rounded"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Personal Access Token</label>
-                  <input
-                    type="password"
-                    value={githubConfig.token}
-                    onChange={(e) => setGithubConfig({...githubConfig, token: e.target.value})}
-                    placeholder="ghp_xxxxxxxxxxxx"
-                    className="w-full px-3 py-2 border rounded"
-                  />
-                  <p className="text-xs text-gray-600 mt-1">
-                    権限: repo (Full control of private repositories)
+            {selectedCells.length > 0 && isAdmin && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 w-96">
+                  <h3 className="text-lg font-bold mb-2">予定を編集</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    {selectedCells.length}個のセルを選択中
+                    {selectedCells.length > 1 && ` (${selectedCells.length * 0.5}時間)`}
                   </p>
+                  <input
+                    type="text"
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    placeholder="予定を入力（空欄で削除）"
+                    className="w-full px-3 py-2 border rounded mb-4"
+                    autoFocus
+                    onKeyPress={(e) => e.key === 'Enter' && updateCell()}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={updateCell}
+                      className="flex-1 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
+                    >
+                      保存
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedCells([]);
+                        setEditText('');
+                      }}
+                      className="flex-1 bg-gray-300 py-2 rounded hover:bg-gray-400"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
                 </div>
               </div>
+            )}
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded p-4 mb-4">
-                <h4 className="font-semibold text-sm mb-2">🔧 設定手順:</h4>
-                <ol className="text-xs space-y-1 list-decimal list-inside">
-                  <li>GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)</li>
-                  <li>「Generate new token」→「Generate new token (classic)」</li>
-                  <li>Note: 適当な名前（例: Schedule Manager）</li>
-                  <li>Expiration: No expiration（推奨）</li>
-                  <li>Select scopes: ✓ repo (全てチェック)</li>
-                  <li>「Generate token」→ トークンをコピーして上記に貼り付け</li>
-                </ol>
-              </div>
+            {showSettings && isAdmin && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <h3 className="text-lg font-bold mb-4">GitHub設定</h3>
+                  
+                  <div className="space-y-4 mb-6">
+                    <div>
+                      <label className="block text-sm font-semibold mb-1">GitHubユーザー名</label>
+                      <input
+                        type="text"
+                        value={githubConfig.owner}
+                        onChange={(e) => setGithubConfig({...githubConfig, owner: e.target.value})}
+                        placeholder="例: your-username"
+                        className="w-full px-3 py-2 border rounded"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-semibold mb-1">リポジトリ名</label>
+                      <input
+                        type="text"
+                        value={githubConfig.repo}
+                        onChange={(e) => setGithubConfig({...githubConfig, repo: e.target.value})}
+                        placeholder="例: schedule-manager"
+                        className="w-full px-3 py-2 border rounded"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-semibold mb-1">Personal Access Token</label>
+                      <input
+                        type="password"
+                        value={githubConfig.token}
+                        onChange={(e) => setGithubConfig({...githubConfig, token: e.target.value})}
+                        placeholder="ghp_xxxxxxxxxxxx"
+                        className="w-full px-3 py-2 border rounded"
+                      />
+                      <p className="text-xs text-gray-600 mt-1">
+                        権限: repo (Full control of private repositories)
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => saveGithubConfig(githubConfig)}
-                  className="flex-1 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
-                >
-                  保存して読み込む
-                </button>
-                <button
-                  onClick={() => setShowSettings(false)}
-                  className="flex-1 bg-gray-300 py-2 rounded hover:bg-gray-400"
-                >
-                  キャンセル
-                </button>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded p-4 mb-4">
+                    <h4 className="font-semibold text-sm mb-2">🔧 設定手順:</h4>
+                    <ol className="text-xs space-y-1 list-decimal list-inside">
+                      <li>GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)</li>
+                      <li>「Generate new token」→「Generate new token (classic)」</li>
+                      <li>Note: 適当な名前（例: Schedule Manager）</li>
+                      <li>Expiration: No expiration（推奨）</li>
+                      <li>Select scopes: ✓ repo (全てチェック)</li>
+                      <li>「Generate token」→ トークンをコピーして上記に貼り付け</li>
+                    </ol>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => saveGithubConfig(githubConfig)}
+                      className="flex-1 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
+                    >
+                      保存して読み込む
+                    </button>
+                    <button
+                      onClick={() => setShowSettings(false)}
+                      className="flex-1 bg-gray-300 py-2 rounded hover:bg-gray-400"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
-  );
-};
+        </div>
+      );
+    };
 
-export default ScheduleManager;
+    ReactDOM.render(<ScheduleManager />, document.getElementById('root'));
+  </script>
+</body>
+</html>
