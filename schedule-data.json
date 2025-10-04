@@ -57,10 +57,10 @@
   },
   "2025-10-01_17:00": {
     "color": "purple-medium",
-    "text": "内定式",
-    "isGrouped": true,
+    "text": "HTC",
+    "isGrouped": false,
     "groupIndex": 0,
-    "groupLength": 6
+    "groupLength": 1
   },
   "2025-10-01_17:30": {
     "color": "purple-medium",
