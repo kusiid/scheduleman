@@ -1895,5 +1895,131 @@
     "isGrouped": true,
     "groupIndex": 1,
     "groupLength": 2
+  },
+  "2025-10-14_19:00": {
+    "color": "orange-medium",
+    "text": "C",
+    "isGrouped": true,
+    "groupIndex": 0,
+    "groupLength": 18
+  },
+  "2025-10-14_19:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 1,
+    "groupLength": 18
+  },
+  "2025-10-14_20:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 2,
+    "groupLength": 18
+  },
+  "2025-10-14_20:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 3,
+    "groupLength": 18
+  },
+  "2025-10-14_21:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 4,
+    "groupLength": 18
+  },
+  "2025-10-14_21:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 5,
+    "groupLength": 18
+  },
+  "2025-10-14_22:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 6,
+    "groupLength": 18
+  },
+  "2025-10-14_22:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 7,
+    "groupLength": 18
+  },
+  "2025-10-14_23:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 8,
+    "groupLength": 18
+  },
+  "2025-10-14_23:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 9,
+    "groupLength": 18
+  },
+  "2025-10-14_24:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 10,
+    "groupLength": 18
+  },
+  "2025-10-14_24:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 11,
+    "groupLength": 18
+  },
+  "2025-10-14_25:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 12,
+    "groupLength": 18
+  },
+  "2025-10-14_25:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 13,
+    "groupLength": 18
+  },
+  "2025-10-14_26:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 14,
+    "groupLength": 18
+  },
+  "2025-10-14_26:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 15,
+    "groupLength": 18
+  },
+  "2025-10-14_27:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 16,
+    "groupLength": 18
+  },
+  "2025-10-14_27:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 17,
+    "groupLength": 18
   }
 }
