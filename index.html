@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Lock, Eye, Save, Download, Upload } from 'lucide-react';
+import { Calendar, Lock, Eye, Save, Download, Upload, Settings } from 'lucide-react';
 
 const ScheduleManager = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -9,12 +9,23 @@ const ScheduleManager = () => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [scheduleData, setScheduleData] = useState({});
   const [selectedColor, setSelectedColor] = useState('blue-light');
-  const [selectedCell, setSelectedCell] = useState(null);
+  const [selectedCells, setSelectedCells] = useState([]);
   const [editText, setEditText] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragEnd, setDragEnd] = useState(null);
-  const [selectedCells, setSelectedCells] = useState([]);
+  const [showSettings, setShowSettings] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
+
+  // GitHub設定（初回のみ設定が必要）
+  const [githubConfig, setGithubConfig] = useState({
+    owner: '', // GitHubユーザー名
+    repo: '', // リポジトリ名
+    token: '', // Personal Access Token
+    branch: 'main',
+    filePath: 'schedule-data.json'
+  });
 
   // 本日の日付
   const today = new Date();
@@ -26,7 +37,7 @@ const ScheduleManager = () => {
     setCurrentMonth(today.getMonth());
   };
 
-  // 24色パレット（8色×濃中淡）
+  // 24色パレット
   const colors = {
     'red-dark': '#991B1B', 'red-medium': '#DC2626', 'red-light': '#FCA5A5',
     'orange-dark': '#9A3412', 'orange-medium': '#EA580C', 'orange-light': '#FDBA74',
@@ -38,27 +49,137 @@ const ScheduleManager = () => {
     'gray-dark': '#374151', 'gray-medium': '#6B7280', 'gray-light': '#D1D5DB'
   };
 
-  // 時間列（30分単位、48列）4:00～27:30（翌日3:30）
+  // 時間列（4:00～27:30）
   const timeSlots = Array.from({ length: 48 }, (_, i) => {
-    const totalHalfHours = i + 8; // 4:00から開始（8半時間後）
+    const totalHalfHours = i + 8;
     const hour = Math.floor(totalHalfHours / 2);
     const minute = totalHalfHours % 2 === 0 ? '00' : '30';
     return `${hour.toString().padStart(2, '0')}:${minute}`;
   });
 
-  // 時間ヘッダー表示用（1時間ごと）
-  const timeHeaders = Array.from({ length: 24 }, (_, i) => {
-    const hour = i + 4; // 4時から開始
-    return hour;
-  });
+  const timeHeaders = Array.from({ length: 24 }, (_, i) => i + 4);
 
-  // 日付行（その月の実際の日数）
   const getDaysInMonth = (year, month) => {
     return new Date(year, month + 1, 0).getDate();
   };
   
   const daysInCurrentMonth = getDaysInMonth(currentYear, currentMonth);
   const days = Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1);
+
+  // GitHub設定を保存（ブラウザのメモリに保存）
+  const saveGithubConfig = (config) => {
+    setGithubConfig(config);
+    // 実際の環境ではlocalStorageに保存しますが、ここではメモリのみ
+    setShowSettings(false);
+    loadFromGitHub(config);
+  };
+
+  // GitHubからデータ読込
+  const loadFromGitHub = async (config = githubConfig) => {
+    if (!config.owner || !config.repo || !config.token) {
+      console.log('GitHub設定が未完了です');
+      return;
+    }
+
+    try {
+      const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.filePath}`;
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `token ${config.token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const content = atob(data.content);
+        const scheduleJson = JSON.parse(content);
+        setScheduleData(scheduleJson);
+        setLastSaved(new Date());
+      } else if (response.status === 404) {
+        // ファイルが存在しない場合は新規作成
+        console.log('データファイルが存在しません。新規作成します。');
+        setScheduleData({});
+      }
+    } catch (error) {
+      console.error('GitHub読込エラー:', error);
+      alert('データの読み込みに失敗しました');
+    }
+  };
+
+  // GitHubにデータ保存
+  const saveToGitHub = async () => {
+    if (!githubConfig.owner || !githubConfig.repo || !githubConfig.token) {
+      alert('GitHub設定を行ってください');
+      setShowSettings(true);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const url = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.filePath}`;
+      
+      // 既存ファイルのSHAを取得
+      let sha = null;
+      try {
+        const getResponse = await fetch(url, {
+          headers: {
+            'Authorization': `token ${githubConfig.token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (getResponse.ok) {
+          const fileData = await getResponse.json();
+          sha = fileData.sha;
+        }
+      } catch (e) {
+        console.log('新規ファイル作成');
+      }
+
+      // データをBase64エンコード
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(scheduleData, null, 2))));
+      
+      const body = {
+        message: `予定更新: ${new Date().toLocaleString('ja-JP')}`,
+        content: content,
+        branch: githubConfig.branch
+      };
+      
+      if (sha) {
+        body.sha = sha;
+      }
+
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${githubConfig.token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (response.ok) {
+        setLastSaved(new Date());
+        alert('GitHubに保存しました！');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message);
+      }
+    } catch (error) {
+      console.error('GitHub保存エラー:', error);
+      alert(`保存に失敗しました: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 初回読込
+  useEffect(() => {
+    if (isAuthenticated && githubConfig.owner && githubConfig.repo && githubConfig.token) {
+      loadFromGitHub();
+    }
+  }, [isAuthenticated]);
 
   // 認証処理
   const handleLogin = () => {
@@ -73,15 +194,7 @@ const ScheduleManager = () => {
     }
   };
 
-  // セルクリック処理
-  const handleCellClick = (day, time) => {
-    if (!isAdmin) return;
-    const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${time}`;
-    setSelectedCells([key]);
-    setEditText(scheduleData[key]?.text || '');
-  };
-
-  // ドラッグ開始
+  // ドラッグ処理
   const handleMouseDown = (day, time) => {
     if (!isAdmin) return;
     setIsDragging(true);
@@ -89,16 +202,13 @@ const ScheduleManager = () => {
     setDragEnd({ day, time });
   };
 
-  // ドラッグ中
   const handleMouseEnter = (day, time) => {
     if (!isAdmin || !isDragging) return;
-    // 同じ日付の範囲内のみドラッグ可能
     if (day === dragStart.day) {
       setDragEnd({ day, time });
     }
   };
 
-  // ドラッグ終了
   const handleMouseUp = () => {
     if (!isAdmin || !isDragging) return;
     setIsDragging(false);
@@ -116,13 +226,11 @@ const ScheduleManager = () => {
       }
       setSelectedCells(cells);
       
-      // 既存のテキストがあれば最初のセルのものを使用
       const firstKey = cells[0];
       setEditText(scheduleData[firstKey]?.text || '');
     }
   };
 
-  // セルが選択範囲内かチェック
   const isCellInSelection = (day, time) => {
     if (!isDragging || !dragStart || !dragEnd) return false;
     if (day !== dragStart.day) return false;
@@ -136,23 +244,20 @@ const ScheduleManager = () => {
     return timeIdx >= minIdx && timeIdx <= maxIdx;
   };
 
-  // セル更新処理
   const updateCell = () => {
     if (selectedCells.length === 0) return;
     const newData = { ...scheduleData };
     
     if (editText.trim() === '') {
-      // 空欄なら削除
       selectedCells.forEach(key => {
         delete newData[key];
       });
     } else {
-      // 複数セル選択の場合は先頭にのみテキスト、後続は色のみ
       selectedCells.forEach((key, index) => {
         newData[key] = {
           color: selectedColor,
-          text: index === 0 ? editText : '', // 先頭のみテキスト
-          isGrouped: selectedCells.length > 1, // グループ化フラグ
+          text: index === 0 ? editText : '',
+          isGrouped: selectedCells.length > 1,
           groupIndex: index,
           groupLength: selectedCells.length
         };
@@ -164,7 +269,63 @@ const ScheduleManager = () => {
     setEditText('');
   };
 
-  // データ保存
+  const getCellStyle = (day, time) => {
+    const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${time}`;
+    const cellData = scheduleData[key];
+    if (!cellData) return { backgroundColor: 'white', color: 'black' };
+    
+    const baseStyle = {
+      backgroundColor: colors[cellData.color],
+      color: (cellData.color.includes('dark') || cellData.color.includes('medium')) ? 'white' : 'black'
+    };
+    
+    if (cellData.isGrouped) {
+      return {
+        ...baseStyle,
+        borderRight: cellData.groupIndex < cellData.groupLength - 1 ? '1px solid rgba(0,0,0,0.1)' : undefined
+      };
+    }
+    
+    return baseStyle;
+  };
+
+  const getCellText = (day, time) => {
+    const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${time}`;
+    const cellData = scheduleData[key];
+    return cellData?.text || '';
+  };
+
+  const getCellTooltip = (day, time) => {
+    const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${time}`;
+    const cellData = scheduleData[key];
+    if (!cellData) return '';
+    
+    if (cellData.isGrouped && cellData.groupIndex > 0) {
+      const timeIdx = timeSlots.indexOf(time);
+      const startTimeIdx = timeIdx - cellData.groupIndex;
+      if (startTimeIdx >= 0) {
+        const startTime = timeSlots[startTimeIdx];
+        const startKey = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${startTime}`;
+        return scheduleData[startKey]?.text || '';
+      }
+    }
+    
+    return cellData.text || '';
+  };
+
+  const hasTextOnRight = (day, time) => {
+    const timeIdx = timeSlots.indexOf(time);
+    for (let i = timeIdx + 1; i < timeSlots.length; i++) {
+      const nextTime = timeSlots[i];
+      const nextKey = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${nextTime}`;
+      const nextData = scheduleData[nextKey];
+      if (nextData?.text) {
+        return i - timeIdx;
+      }
+    }
+    return null;
+  };
+
   const saveData = () => {
     const dataStr = JSON.stringify(scheduleData, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
@@ -175,7 +336,6 @@ const ScheduleManager = () => {
     a.click();
   };
 
-  // データ読込
   const loadData = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -190,73 +350,6 @@ const ScheduleManager = () => {
       };
       reader.readAsText(file);
     }
-  };
-
-  // セル背景色取得
-  const getCellStyle = (day, time) => {
-    const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${time}`;
-    const cellData = scheduleData[key];
-    if (!cellData) return { backgroundColor: 'white', color: 'black' };
-    
-    const baseStyle = {
-      backgroundColor: colors[cellData.color],
-      color: (cellData.color.includes('dark') || cellData.color.includes('medium')) ? 'white' : 'black'
-    };
-    
-    // グループ化されている場合、境界線を調整
-    if (cellData.isGrouped) {
-      return {
-        ...baseStyle,
-        borderRight: cellData.groupIndex < cellData.groupLength - 1 ? '1px solid rgba(0,0,0,0.1)' : undefined
-      };
-    }
-    
-    return baseStyle;
-  };
-
-  // セルテキスト取得
-  const getCellText = (day, time) => {
-    const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${time}`;
-    const cellData = scheduleData[key];
-    // テキストがある場合のみ表示（グループの先頭セルのみ）
-    return cellData?.text || '';
-  };
-
-  // 右側に他のテキストがあるかチェック
-  const hasTextOnRight = (day, time) => {
-    const timeIdx = timeSlots.indexOf(time);
-    // 右側のセルをチェック
-    for (let i = timeIdx + 1; i < timeSlots.length; i++) {
-      const nextTime = timeSlots[i];
-      const nextKey = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${nextTime}`;
-      const nextData = scheduleData[nextKey];
-      if (nextData?.text) {
-        // 右にテキストがある場合、その距離を返す
-        return i - timeIdx;
-      }
-    }
-    return null; // 右側にテキストなし
-  };
-
-  // セル全体のツールチップ用テキスト取得
-  const getCellTooltip = (day, time) => {
-    const key = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${time}`;
-    const cellData = scheduleData[key];
-    if (!cellData) return '';
-    
-    // グループ化されている場合、先頭セルのテキストを探す
-    if (cellData.isGrouped && cellData.groupIndex > 0) {
-      // 先頭セルのキーを計算
-      const timeIdx = timeSlots.indexOf(time);
-      const startTimeIdx = timeIdx - cellData.groupIndex;
-      if (startTimeIdx >= 0) {
-        const startTime = timeSlots[startTimeIdx];
-        const startKey = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}_${startTime}`;
-        return scheduleData[startKey]?.text || '';
-      }
-    }
-    
-    return cellData.text || '';
   };
 
   if (!isAuthenticated) {
@@ -311,8 +404,13 @@ const ScheduleManager = () => {
                   <Eye className="w-4 h-4" />閲覧モード
                 </span>
               )}
+              {lastSaved && (
+                <span className="text-xs text-gray-500">
+                  最終保存: {lastSaved.toLocaleTimeString('ja-JP')}
+                </span>
+              )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button
                 onClick={() => {
                   if (currentMonth === 0) {
@@ -349,10 +447,24 @@ const ScheduleManager = () => {
               )}
               {isAdmin && (
                 <>
-                  <button onClick={saveData} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-2">
-                    <Download className="w-4 h-4" />保存
+                  <button 
+                    onClick={saveToGitHub} 
+                    disabled={isSaving}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4" />
+                    {isSaving ? '保存中...' : 'GitHub保存'}
                   </button>
-                  <label className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2 cursor-pointer">
+                  <button 
+                    onClick={() => setShowSettings(true)} 
+                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 flex items-center gap-2"
+                  >
+                    <Settings className="w-4 h-4" />設定
+                  </button>
+                  <button onClick={saveData} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2">
+                    <Download className="w-4 h-4" />DL
+                  </button>
+                  <label className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 flex items-center gap-2 cursor-pointer">
                     <Upload className="w-4 h-4" />読込
                     <input type="file" accept=".json" onChange={loadData} className="hidden" />
                   </label>
@@ -362,7 +474,7 @@ const ScheduleManager = () => {
           </div>
         </div>
 
-        {/* カラーパレット（管理者のみ） */}
+        {/* カラーパレット */}
         {isAdmin && (
           <div className="bg-white rounded-lg shadow p-4 mb-4">
             <h3 className="text-sm font-semibold mb-2">カラーパレット</h3>
@@ -403,46 +515,45 @@ const ScheduleManager = () => {
                     >
                       {day}
                     </td>
-                  {timeSlots.map((time, i) => {
-                    const isSelected = isCellInSelection(day, time);
-                    const cellText = getCellText(day, time);
-                    const tooltip = getCellTooltip(day, time);
-                    const distanceToNext = hasTextOnRight(day, time);
-                    
-                    // テキストがある場合の表示スタイル
-                    const hasText = cellText.length > 0;
-                    const maxWidth = distanceToNext ? `${distanceToNext * 2}rem` : 'none';
-                    
-                    return (
-                      <td
-                        key={i}
-                        className={`border border-gray-300 p-0.5 cursor-pointer hover:opacity-80 w-8 h-6 relative ${isSelected ? 'ring-2 ring-indigo-600 z-20' : ''}`}
-                        style={{
-                          ...getCellStyle(day, time),
-                          backgroundColor: isSelected ? 'rgba(99, 102, 241, 0.3)' : getCellStyle(day, time).backgroundColor
-                        }}
-                        onMouseDown={() => handleMouseDown(day, time)}
-                        onMouseEnter={() => handleMouseEnter(day, time)}
-                        onMouseUp={handleMouseUp}
-                        title={tooltip}
-                      >
-                        {hasText && (
-                          <div 
-                            className="absolute left-0.5 top-0.5 text-[10px] font-semibold leading-tight whitespace-nowrap z-10"
-                            style={{ 
-                              maxWidth: maxWidth,
-                              overflow: 'hidden',
-                              textOverflow: distanceToNext ? 'ellipsis' : 'clip'
-                            }}
-                          >
-                            {cellText}
-                          </div>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
+                    {timeSlots.map((time, i) => {
+                      const isSelected = isCellInSelection(day, time);
+                      const cellText = getCellText(day, time);
+                      const tooltip = getCellTooltip(day, time);
+                      const distanceToNext = hasTextOnRight(day, time);
+                      
+                      const hasText = cellText.length > 0;
+                      const maxWidth = distanceToNext ? `${distanceToNext * 2}rem` : 'none';
+                      
+                      return (
+                        <td
+                          key={i}
+                          className={`border border-gray-300 p-0.5 cursor-pointer hover:opacity-80 w-8 h-6 relative ${isSelected ? 'ring-2 ring-indigo-600 z-20' : ''}`}
+                          style={{
+                            ...getCellStyle(day, time),
+                            backgroundColor: isSelected ? 'rgba(99, 102, 241, 0.3)' : getCellStyle(day, time).backgroundColor
+                          }}
+                          onMouseDown={() => handleMouseDown(day, time)}
+                          onMouseEnter={() => handleMouseEnter(day, time)}
+                          onMouseUp={handleMouseUp}
+                          title={tooltip}
+                        >
+                          {hasText && (
+                            <div 
+                              className="absolute left-0.5 top-0.5 text-[10px] font-semibold leading-tight whitespace-nowrap z-10"
+                              style={{ 
+                                maxWidth: maxWidth,
+                                overflow: 'hidden',
+                                textOverflow: distanceToNext ? 'ellipsis' : 'clip'
+                              }}
+                            >
+                              {cellText}
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
               })}
             </tbody>
           </table>
@@ -478,6 +589,80 @@ const ScheduleManager = () => {
                     setSelectedCells([]);
                     setEditText('');
                   }}
+                  className="flex-1 bg-gray-300 py-2 rounded hover:bg-gray-400"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* GitHub設定モーダル */}
+        {showSettings && isAdmin && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h3 className="text-lg font-bold mb-4">GitHub設定</h3>
+              
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-semibold mb-1">GitHubユーザー名</label>
+                  <input
+                    type="text"
+                    value={githubConfig.owner}
+                    onChange={(e) => setGithubConfig({...githubConfig, owner: e.target.value})}
+                    placeholder="例: your-username"
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold mb-1">リポジトリ名</label>
+                  <input
+                    type="text"
+                    value={githubConfig.repo}
+                    onChange={(e) => setGithubConfig({...githubConfig, repo: e.target.value})}
+                    placeholder="例: schedule-manager"
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Personal Access Token</label>
+                  <input
+                    type="password"
+                    value={githubConfig.token}
+                    onChange={(e) => setGithubConfig({...githubConfig, token: e.target.value})}
+                    placeholder="ghp_xxxxxxxxxxxx"
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                  <p className="text-xs text-gray-600 mt-1">
+                    権限: repo (Full control of private repositories)
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded p-4 mb-4">
+                <h4 className="font-semibold text-sm mb-2">🔧 設定手順:</h4>
+                <ol className="text-xs space-y-1 list-decimal list-inside">
+                  <li>GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)</li>
+                  <li>「Generate new token」→「Generate new token (classic)」</li>
+                  <li>Note: 適当な名前（例: Schedule Manager）</li>
+                  <li>Expiration: No expiration（推奨）</li>
+                  <li>Select scopes: ✓ repo (全てチェック)</li>
+                  <li>「Generate token」→ トークンをコピーして上記に貼り付け</li>
+                </ol>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => saveGithubConfig(githubConfig)}
+                  className="flex-1 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
+                >
+                  保存して読み込む
+                </button>
+                <button
+                  onClick={() => setShowSettings(false)}
                   className="flex-1 bg-gray-300 py-2 rounded hover:bg-gray-400"
                 >
                   キャンセル
