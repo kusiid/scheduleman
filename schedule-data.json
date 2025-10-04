@@ -2875,5 +2875,299 @@
     "isGrouped": true,
     "groupIndex": 47,
     "groupLength": 48
+  },
+  "2025-10-18_04:00": {
+    "color": "orange-dark",
+    "text": "Trip",
+    "isGrouped": true,
+    "groupIndex": 0,
+    "groupLength": 42
+  },
+  "2025-10-18_04:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 1,
+    "groupLength": 42
+  },
+  "2025-10-18_05:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 2,
+    "groupLength": 42
+  },
+  "2025-10-18_05:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 3,
+    "groupLength": 42
+  },
+  "2025-10-18_06:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 4,
+    "groupLength": 42
+  },
+  "2025-10-18_06:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 5,
+    "groupLength": 42
+  },
+  "2025-10-18_07:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 6,
+    "groupLength": 42
+  },
+  "2025-10-18_07:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 7,
+    "groupLength": 42
+  },
+  "2025-10-18_08:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 8,
+    "groupLength": 42
+  },
+  "2025-10-18_08:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 9,
+    "groupLength": 42
+  },
+  "2025-10-18_09:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 10,
+    "groupLength": 42
+  },
+  "2025-10-18_09:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 11,
+    "groupLength": 42
+  },
+  "2025-10-18_10:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 12,
+    "groupLength": 42
+  },
+  "2025-10-18_10:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 13,
+    "groupLength": 42
+  },
+  "2025-10-18_11:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 14,
+    "groupLength": 42
+  },
+  "2025-10-18_11:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 15,
+    "groupLength": 42
+  },
+  "2025-10-18_12:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 16,
+    "groupLength": 42
+  },
+  "2025-10-18_12:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 17,
+    "groupLength": 42
+  },
+  "2025-10-18_13:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 18,
+    "groupLength": 42
+  },
+  "2025-10-18_13:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 19,
+    "groupLength": 42
+  },
+  "2025-10-18_14:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 20,
+    "groupLength": 42
+  },
+  "2025-10-18_14:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 21,
+    "groupLength": 42
+  },
+  "2025-10-18_15:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 22,
+    "groupLength": 42
+  },
+  "2025-10-18_15:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 23,
+    "groupLength": 42
+  },
+  "2025-10-18_16:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 24,
+    "groupLength": 42
+  },
+  "2025-10-18_16:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 25,
+    "groupLength": 42
+  },
+  "2025-10-18_17:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 26,
+    "groupLength": 42
+  },
+  "2025-10-18_17:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 27,
+    "groupLength": 42
+  },
+  "2025-10-18_18:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 28,
+    "groupLength": 42
+  },
+  "2025-10-18_18:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 29,
+    "groupLength": 42
+  },
+  "2025-10-18_19:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 30,
+    "groupLength": 42
+  },
+  "2025-10-18_19:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 31,
+    "groupLength": 42
+  },
+  "2025-10-18_20:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 32,
+    "groupLength": 42
+  },
+  "2025-10-18_20:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 33,
+    "groupLength": 42
+  },
+  "2025-10-18_21:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 34,
+    "groupLength": 42
+  },
+  "2025-10-18_21:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 35,
+    "groupLength": 42
+  },
+  "2025-10-18_22:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 36,
+    "groupLength": 42
+  },
+  "2025-10-18_22:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 37,
+    "groupLength": 42
+  },
+  "2025-10-18_23:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 38,
+    "groupLength": 42
+  },
+  "2025-10-18_23:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 39,
+    "groupLength": 42
+  },
+  "2025-10-18_24:00": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 40,
+    "groupLength": 42
+  },
+  "2025-10-18_24:30": {
+    "color": "orange-dark",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 41,
+    "groupLength": 42
   }
 }
