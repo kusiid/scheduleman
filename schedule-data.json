@@ -1560,27 +1560,6 @@
     "groupIndex": 21,
     "groupLength": 22
   },
-  "2025-10-11_04:00": {
-    "color": "orange-medium",
-    "text": "C",
-    "isGrouped": true,
-    "groupIndex": 0,
-    "groupLength": 3
-  },
-  "2025-10-11_04:30": {
-    "color": "orange-medium",
-    "text": "",
-    "isGrouped": true,
-    "groupIndex": 1,
-    "groupLength": 3
-  },
-  "2025-10-11_05:00": {
-    "color": "orange-medium",
-    "text": "",
-    "isGrouped": true,
-    "groupIndex": 2,
-    "groupLength": 3
-  },
   "2025-10-10_14:30": {
     "color": "blue-medium",
     "text": "",
