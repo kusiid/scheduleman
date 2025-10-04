@@ -1,0 +1,44 @@
+{
+  "2025-10-04_23:00": {
+    "color": "blue-light",
+    "text": "システム構築中",
+    "isGrouped": true,
+    "groupIndex": 0,
+    "groupLength": 6
+  },
+  "2025-10-04_23:30": {
+    "color": "blue-light",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 1,
+    "groupLength": 6
+  },
+  "2025-10-04_24:00": {
+    "color": "blue-light",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 2,
+    "groupLength": 6
+  },
+  "2025-10-04_24:30": {
+    "color": "blue-light",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 3,
+    "groupLength": 6
+  },
+  "2025-10-04_25:00": {
+    "color": "blue-light",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 4,
+    "groupLength": 6
+  },
+  "2025-10-04_25:30": {
+    "color": "blue-light",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 5,
+    "groupLength": 6
+  }
+}
