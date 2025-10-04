@@ -1,10 +1,10 @@
 {
   "2025-10-04_23:00": {
     "color": "blue-light",
-    "text": "ã·ã¹ãã æ§ç¯ä¸­",
-    "isGrouped": true,
+    "text": "system",
+    "isGrouped": false,
     "groupIndex": 0,
-    "groupLength": 6
+    "groupLength": 1
   },
   "2025-10-04_23:30": {
     "color": "blue-light",
