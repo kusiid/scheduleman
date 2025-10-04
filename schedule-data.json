@@ -376,5 +376,47 @@
     "isGrouped": true,
     "groupIndex": 9,
     "groupLength": 10
+  },
+  "2025-10-06_13:00": {
+    "color": "sea-medium",
+    "text": "core",
+    "isGrouped": true,
+    "groupIndex": 0,
+    "groupLength": 6
+  },
+  "2025-10-06_13:30": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 1,
+    "groupLength": 6
+  },
+  "2025-10-06_14:00": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 2,
+    "groupLength": 6
+  },
+  "2025-10-06_14:30": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 3,
+    "groupLength": 6
+  },
+  "2025-10-06_15:00": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 4,
+    "groupLength": 6
+  },
+  "2025-10-06_15:30": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 5,
+    "groupLength": 6
   }
 }
