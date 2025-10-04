@@ -194,5 +194,117 @@
     "isGrouped": true,
     "groupIndex": 13,
     "groupLength": 14
+  },
+  "2025-10-03_11:00": {
+    "color": "sea-medium",
+    "text": "tus",
+    "isGrouped": true,
+    "groupIndex": 0,
+    "groupLength": 16
+  },
+  "2025-10-03_11:30": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 1,
+    "groupLength": 16
+  },
+  "2025-10-03_12:00": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 2,
+    "groupLength": 16
+  },
+  "2025-10-03_12:30": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 3,
+    "groupLength": 16
+  },
+  "2025-10-03_13:00": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 4,
+    "groupLength": 16
+  },
+  "2025-10-03_13:30": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 5,
+    "groupLength": 16
+  },
+  "2025-10-03_14:00": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 6,
+    "groupLength": 16
+  },
+  "2025-10-03_14:30": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 7,
+    "groupLength": 16
+  },
+  "2025-10-03_15:00": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 8,
+    "groupLength": 16
+  },
+  "2025-10-03_15:30": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 9,
+    "groupLength": 16
+  },
+  "2025-10-03_16:00": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 10,
+    "groupLength": 16
+  },
+  "2025-10-03_16:30": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 11,
+    "groupLength": 16
+  },
+  "2025-10-03_17:00": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 12,
+    "groupLength": 16
+  },
+  "2025-10-03_17:30": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 13,
+    "groupLength": 16
+  },
+  "2025-10-03_18:00": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 14,
+    "groupLength": 16
+  },
+  "2025-10-03_18:30": {
+    "color": "sea-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 15,
+    "groupLength": 16
   }
 }
