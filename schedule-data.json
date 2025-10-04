@@ -1512,18 +1512,18 @@
     "groupLength": 22
   },
   "2025-10-10_14:30": {
-    "color": "blue-medium",
-    "text": "",
+    "color": "purple-medium",
+    "text": "TOEIC?",
     "isGrouped": true,
-    "groupIndex": 13,
-    "groupLength": 22
+    "groupIndex": 0,
+    "groupLength": 2
   },
   "2025-10-10_15:00": {
-    "color": "blue-medium",
+    "color": "purple-medium",
     "text": "",
     "isGrouped": true,
-    "groupIndex": 14,
-    "groupLength": 22
+    "groupIndex": 1,
+    "groupLength": 2
   },
   "2025-10-10_15:30": {
     "color": "blue-medium",
