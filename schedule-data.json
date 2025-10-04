@@ -1209,5 +1209,61 @@
     "isGrouped": true,
     "groupIndex": 17,
     "groupLength": 18
+  },
+  "2025-10-10_04:00": {
+    "color": "orange-medium",
+    "text": "C",
+    "isGrouped": true,
+    "groupIndex": 0,
+    "groupLength": 8
+  },
+  "2025-10-10_04:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 1,
+    "groupLength": 8
+  },
+  "2025-10-10_05:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 2,
+    "groupLength": 8
+  },
+  "2025-10-10_05:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 3,
+    "groupLength": 8
+  },
+  "2025-10-10_06:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 4,
+    "groupLength": 8
+  },
+  "2025-10-10_06:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 5,
+    "groupLength": 8
+  },
+  "2025-10-10_07:00": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 6,
+    "groupLength": 8
+  },
+  "2025-10-10_07:30": {
+    "color": "orange-medium",
+    "text": "",
+    "isGrouped": true,
+    "groupIndex": 7,
+    "groupLength": 8
   }
 }
