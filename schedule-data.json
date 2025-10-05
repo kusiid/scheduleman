@@ -658,8 +658,8 @@
     "groupLength": 8
   },
   "2025-10-08_06:00": {
-    "color": "blue-light",
-    "text": "N",
+    "color": "yellow-medium",
+    "text": "NN",
     "isGrouped": false,
     "groupIndex": 0,
     "groupLength": 1
