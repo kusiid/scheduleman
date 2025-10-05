@@ -658,11 +658,11 @@
     "groupLength": 8
   },
   "2025-10-08_06:00": {
-    "color": "yellow-medium",
-    "text": "nagasaki",
-    "isGrouped": true,
+    "color": "blue-light",
+    "text": "N",
+    "isGrouped": false,
     "groupIndex": 0,
-    "groupLength": 44
+    "groupLength": 1
   },
   "2025-10-08_06:30": {
     "color": "yellow-medium",
