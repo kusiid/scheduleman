@@ -967,10 +967,10 @@
   },
   "2025-10-09_04:00": {
     "color": "yellow-medium",
-    "text": "nagasaki",
-    "isGrouped": true,
+    "text": "N",
+    "isGrouped": false,
     "groupIndex": 0,
-    "groupLength": 17
+    "groupLength": 1
   },
   "2025-10-09_04:30": {
     "color": "yellow-medium",
